@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>채팅 서비스 아키텍처 가이드</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Pretendard:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="background-glow"></div>
+
+    <header>
+        <nav>
+            <div class="logo">ChatArch<span class="dot">.</span></div>
+        </nav>
+        <div class="hero">
+            <h1>채팅 서비스 구현,<br>어떤 기술을 써야 할까?</h1>
+            <!-- Subtitle removed as requested -->
+        </div>
+    </header>
+    <main>
+
+        <!-- HTTP vs WebSocket Comparison Diagram -->
+        <section class="protocol-comparison fade-in-section">
+            <div class="section-title-group">
+                <h2>HTTP vs WebSocket</h2>
+                <p class="section-subtitle">실시간 통신, 무엇이 다를까요?</p>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-box http-box">
+                    <div class="d-header">
+                        <h3>HTTP</h3>
+                        <span class="d-badge">Request / Response</span>
+                    </div>
+                    <div class="d-visual">
+                        <div class="d-row">
+                            <span class="d-label">Client</span>
+                            <div class="d-arrow-group">
+                                <div class="d-arrow req">REQ ➔</div>
+                                <div class="d-arrow res"> RES</div>
+                            </div>
+                            <span class="d-label">Server</span>
+                        </div>
+                        <div class="d-status">연결 끊김 (Stateless)</div>
+                    </div>
+                    <p class="d-desc">원할 때만 데이터를 요청하고,<br>응답 후 연결이 끊깁니다.</p>
+                </div>
+
+                <div class="vs-badge">VS</div>
+
+                <div class="diagram-box ws-box">
+                    <div class="d-header">
+                        <h3>WebSocket</h3>
+                        <span class="d-badge">Bidirectional</span>
+                    </div>
+                    <div class="d-visual">
+                        <div class="d-row">
+                            <span class="d-label">Client</span>
+                            <div class="d-pipe">
+                                <div class="d-flow"></div>
+                                <span class="d-conn-text">Connected</span>
+                            </div>
+                            <span class="d-label">Server</span>
+                        </div>
+                        <div class="d-status active">연결 유지 (Stateful)</div>
+                    </div>
+                    <p class="d-desc">한 번 연결하면 파이프처럼<br>양방향으로 데이터가 흐릅니다.</p>
+                </div>
+            </div>
+
+            <div class="beginner-explanation">
+                <div class="explanation-icon">💡</div>
+                <div class="explanation-text">
+                    <strong>초보자를 위한 한 줄 요약</strong>
+                    <p>HTTP가 <strong>"용건이 있을 때만 거는 전화"</strong>라면, WebSocket은 <strong>"24시간 내내 연결된 무전기"</strong>와 같습니다.
+                        채팅처럼
+                        쉴 새 없이 대화가 오가는 서비스에는 무전기(WebSocket)가 훨씬 효율적입니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- HTTP Limitations & Polling Section -->
+        <section class="limitations-section fade-in-section">
+            <div class="limit-content">
+                <div class="section-title-group">
+                    <h2>HTTP의 치명적 한계</h2>
+                    <p class="section-subtitle">왜 HTTP만으로는 실시간 채팅이 불가능할까요?</p>
+                </div>
+
+                <div class="limit-diagram-box">
+                    <div class="limit-scenario">
+                        <div class="actor server">
+                            <div class="actor-icon">🖥️</div>
+                            <span>Server</span>
+                            <div class="msg-bubble new">New Message!</div>
+                        </div>
+                        <div class="barrier">
+                            <div class="barrier-line"></div>
+                            <div class="barrier-icon">🚫</div>
+                            <span class="barrier-text">전송 불가</span>
+                        </div>
+                        <div class="actor client">
+                            <div class="actor-icon">👤</div>
+                            <span>Client</span>
+                            <div class="status-text">요청 없음...</div>
+                        </div>
+                    </div>
+                    <p class="limit-desc">
+                        HTTP는 <strong>"Client가 요청을 보내야만 Server가 응답한다"</strong>는 철칙이 있습니다.<br>
+                        서버에 새로운 메시지가 도착해도, 클라이언트가 먼저 말을 걸지 않으면 서버는 데이터를 보낼 방법이 없습니다.
+                    </p>
+                </div>
+            </div>
+
+            <div class="polling-section">
+                <div class="section-title-group">
+                    <h3>그럼 계속 물어보면 되잖아? (Polling)</h3>
+                    <p class="section-subtitle">과거의 해결책 '폴링'과 현대의 '웹소켓' 비교</p>
+                </div>
+
+                <div class="polling-vs-ws">
+                    <!-- Polling Card -->
+                    <div class="compare-card polling">
+                        <div class="card-header">
+                            <span class="method-badge old">Old</span>
+                            <h4>HTTP Polling</h4>
+                        </div>
+                        <div class="timeline-visual">
+                            <div class="t-row">
+                                <span class="t-time">0.1s</span>
+                                <div class="t-bubble req">"새 글 있어?"</div>
+                            </div>
+                            <div class="t-row">
+                                <span class="t-time">0.2s</span>
+                                <div class="t-bubble res">"아니"</div>
+                            </div>
+                            <div class="t-gap">...대기...</div>
+                            <div class="t-row">
+                                <span class="t-time">1.0s</span>
+                                <div class="t-bubble req">"새 글 있어?"</div>
+                            </div>
+                            <div class="t-row">
+                                <span class="t-time">1.1s</span>
+                                <div class="t-bubble res data">"응! 여기"</div>
+                            </div>
+                        </div>
+                        <div class="verdict-box bad">
+                            <strong>단점</strong>
+                            <ul>
+                                <li>서버 부하 심함 (계속된 요청)</li>
+                                <li>실시간성 부족 (요청 주기만큼 지연)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- WebSocket Card -->
+                    <div class="compare-card websocket-comp">
+                        <div class="card-header">
+                            <span class="method-badge new">New</span>
+                            <h4>WebSocket</h4>
+                        </div>
+                        <div class="timeline-visual ws-mode">
+                            <div class="t-row">
+                                <span class="t-time">0.0s</span>
+                                <div class="t-bubble conn">연결 수립 (Connect)</div>
+                            </div>
+                            <div class="t-gap long">... (조용히 연결 유지) ...</div>
+                            <div class="t-row highlight">
+                                <span class="t-time">Anytime</span>
+                                <div class="t-bubble push">⚡️ 서버: "자, 받으세요!"</div>
+                            </div>
+                        </div>
+                        <div class="verdict-box good">
+                            <strong>장점</strong>
+                            <ul>
+                                <li>서버 부하 최소화 (이벤트 발생 시만)</li>
+                                <li>리얼타임 전송 (지연 없음)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="core-tech-section">
+            <div class="section-title-group">
+                <h2>핵심 기술 3대장</h2>
+                <p class="section-subtitle">성공적인 채팅 서비스를 위한 필수 기술 요소</p>
+            </div>
+
+            <div class="cards-container">
+                <!-- WebSocket Card -->
+                <div class="card websocket-card" id="card-websocket">
+                    <div class="icon-wrapper">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 12h20M2 12l5-5m-5 5l5 5" />
+                        </svg>
+                    </div>
+                    <h2>WebSocket</h2>
+                    <p class="desc">실시간 양방향 통신의 기초</p>
+
+                    <!-- Architecture Visual: Persistent Pipe -->
+                    <div class="arch-visual ws-arch">
+                        <div class="device client">
+                            <span class="label">Client</span>
+                        </div>
+                        <div class="connection-pipe">
+                            <div class="data-particle p-left"></div>
+                            <div class="data-particle p-right"></div>
+                            <div class="pipe-glow"></div>
+                        </div>
+                        <div class="device server">
+                            <span class="label">Server</span>
+                        </div>
+                    </div>
+
+                    <div class="content">
+                        <p>HTTP 핸드셰이크로 연결을 맺은 후, 끊지 않고 계속 유지하는 '전용 파이프'를 뚫는 것과 같습니다.</p>
+                        <ul class="pros-cons">
+                            <li><span class="check">✓</span> 연결 유지 (Stateful)</li>
+                            <li><span class="check">✓</span> 양방향 실시간 전송</li>
+                            <li><span class="cross">✗</span> 메시지 형식이 자유로워(String/Binary) 파싱 로직 필요</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- STOMP Card -->
+                <div class="card stomp-card" id="card-stomp">
+                    <div class="icon-wrapper">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                            <path d="M22 6l-10 7L2 6" />
+                        </svg>
+                    </div>
+                    <h2>STOMP</h2>
+                    <p class="desc">메시지 규격과 라우팅의 표준</p>
+
+                    <!-- Improved Architecture Visual: Envelope Analogy -->
+                    <div class="arch-visual stomp-arch">
+                        <div class="stomp-concept">
+                            <div class="raw-data">
+                                <span class="data-text">"안녕"</span>
+                                <span class="data-label">Raw Data</span>
+                            </div>
+                            <div class="process-arrow">
+                                <span>규격화</span>
+                                <div class="arrow-shape">➜</div>
+                            </div>
+                            <div class="stomp-envelope">
+                                <div class="env-header">
+                                    <span class="cmd">SEND</span>
+                                    <span class="dest">To: /room/1</span>
+                                </div>
+                                <div class="env-body">"안녕"</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="content">
+                        <p>단순한 데이터(WebSocket)에 <strong>'명령어'</strong>와 <strong>'주소'</strong>를 붙이는 규칙입니다. 편지 봉투에 주소를 적듯,
+                            메시지가
+                            어디로 가야 할지 명확해집니다.</p>
+                        <ul class="pros-cons">
+                            <li><span class="check">✓</span> Pub/Sub 구조 기본 지원</li>
+                            <li><span class="check">✓</span> 메시지 헤더를 통한 인증/메타데이터 처리</li>
+                            <li><span class="check">✓</span> Spring Security와 쉬운 연동</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Redis Card -->
+                <div class="card redis-card" id="card-redis">
+                    <div class="icon-wrapper">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                            <line x1="12" y1="22.08" x2="12" y2="12" />
+                            <line x1="3.27" y1="16.96" x2="12" y2="12.01" />
+                            <line x1="20.73" y1="16.96" x2="12" y2="12.01" />
+                        </svg>
+                    </div>
+                    <h2>Redis Pub/Sub</h2>
+                    <p class="desc">다중 서버를 위한 확성기</p>
+
+                    <!-- Architecture Visual: Fan-out -->
+                    <div class="arch-visual redis-arch">
+                        <div class="redis-center">
+                            <span>Redis</span>
+                            <div class="signal-ring"></div>
+                        </div>
+                        <div class="server-orbit">
+                            <div class="orb-server s1">S1</div>
+                            <div class="orb-server s2">S2</div>
+                            <div class="orb-server s3">S3</div>
+                        </div>
+                    </div>
+
+                    <div class="content">
+                        <p>서버가 여러 대일 때, "모든 서버에게 이 메시지를 뿌려줘!"라고 외치는 확성기 역할을 합니다. 채팅방이 어느 서버에 있든 메시지를 전달받을 수 있습니다.</p>
+                        <ul class="pros-cons">
+                            <li><span class="check">✓</span> 서버 간 메시지 동기화</li>
+                            <li><span class="check">✓</span> 인메모리 기반의 초고속 처리</li>
+                            <li><span class="cross">✗</span> 메시지 영구 저장 안됨 (휘발성)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Scenario Guide (Diagrammatic Comparison) -->
+        <section class="scenario-section fade-in-section">
+            <h2>상황별 추천 아키텍처</h2>
+            <p class="section-desc">서비스의 규모와 목적에 따라 적합한 구성을 선택하세요.</p>
+
+            <div class="scenario-container">
+                <!-- Scenario 1 -->
+                <div class="scenario-card">
+                    <div class="scenario-visual simple">
+                        <div class="s-node">User</div>
+                        <div class="s-line"></div>
+                        <div class="s-node">Server</div>
+                    </div>
+                    <h3>Level 1. 소규모/토이 프로젝트</h3>
+                    <p class="tech-stack">Only <span class="highlight ws">WebSocket</span></p>
+                    <div class="example-list">
+                        <span class="ex-tag">1:1 채팅</span>
+                        <span class="ex-tag">실시간 알림</span>
+                        <span class="ex-tag">주식 호가창</span>
+                    </div>
+                    <p class="desc">단순한 통신에 적합합니다. 프로토콜을 직접 정의해야 하므로 기능이 복잡해지면 관리가 어렵습니다.</p>
+                </div>
+
+                <!-- Scenario 2 -->
+                <div class="scenario-card">
+                    <div class="scenario-visual standard">
+                        <div class="s-node">User</div>
+                        <div class="s-line dashed"></div>
+                        <div class="s-node">Server</div>
+                        <div class="s-badge">STOMP</div>
+                    </div>
+                    <h3>Level 2. 일반적인 채팅 서비스</h3>
+                    <p class="tech-stack"><span class="highlight ws">WebSocket</span> + <span
+                            class="highlight stomp">STOMP</span></p>
+                    <div class="example-list">
+                        <span class="ex-tag">그룹 채팅</span>
+                        <span class="ex-tag">사내 메신저</span>
+                        <span class="ex-tag">게임 로비 채팅</span>
+                    </div>
+                    <p class="desc">메시지 형식이 규격화되어 있고, Spring Security와 연동하여 인증/인가를 쉽게 처리할 수 있습니다.</p>
+                </div>
+
+                <!-- Scenario 3 -->
+                <div class="scenario-card">
+                    <div class="scenario-visual scale">
+                        <div class="s-group">
+                            <div class="s-node">S1</div>
+                            <div class="s-node">S2</div>
+                        </div>
+                        <div class="s-line double"></div>
+                        <div class="s-node redis">Redis</div>
+                    </div>
+                    <h3>Level 3. 대규모 트래픽 서비스</h3>
+                    <p class="tech-stack"><span class="highlight stomp">STOMP</span> + <span
+                            class="highlight redis">Redis</span></p>
+                    <div class="example-list">
+                        <span class="ex-tag">대국민 메신저</span>
+                        <span class="ex-tag">라이브 방송 채팅</span>
+                        <span class="ex-tag">글로벌 서비스</span>
+                    </div>
+                    <p class="desc">서버 확장이 필수적인 환경입니다. Redis Pub/Sub을 통해 여러 서버 간 메시지를 동기화하여 유실 없는 통신을 보장합니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="comparison-section fade-in-section">
+            <h2>한눈에 비교하기</h2>
+            <div class="comparison-table-wrapper">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>구분</th>
+                            <th>WebSocket</th>
+                            <th>STOMP</th>
+                            <th>Redis Pub/Sub</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>주요 역할</td>
+                            <td>연결 통로 (Transport)</td>
+                            <td>메시지 규격 (Protocol)</td>
+                            <td>메시지 중계 (Broker)</td>
+                        </tr>
+                        <tr>
+                            <td>동작 방식</td>
+                            <td>
+                                <div class="mini-visual mv-ws">
+                                    <div class="mv-line"></div>
+                                </div>
+                                1:1 파이프 연결
+                            </td>
+                            <td>
+                                <div class="mini-visual mv-stomp">
+                                    <div class="mv-rect">Header</div>
+                                </div>
+                                규격화된 편지
+                            </td>
+                            <td>
+                                <div class="mini-visual mv-redis">
+                                    <div class="mv-circle"></div>
+                                    <div class="mv-waves">)))</div>
+                                </div>
+                                방송 시스템
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>구현 난이도</td>
+                            <td>
+                                <span class="badge high">높음</span>
+                                <span class="sub-text">규격 직접 정의 필요</span>
+                            </td>
+                            <td>
+                                <span class="badge mid">중간</span>
+                                <span class="sub-text">라이브러리 활용</span>
+                            </td>
+                            <td>
+                                <span class="badge low">설정 필요</span>
+                                <span class="sub-text">인프라 구축</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>확장성</td>
+                            <td>단일 서버</td>
+                            <td>단일 서버</td>
+                            <td><strong>다중 서버 (Scale-out)</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="summary-box">
+                <h3>💡 핵심 요약</h3>
+                <div class="summary-grid">
+                    <div class="s-item">
+                        <strong>WebSocket</strong>은 "전화선"입니다. 연결만 시켜줄 뿐, 무슨 언어로 말할지는 우리가 정해야 합니다.
+                    </div>
+                    <div class="s-item">
+                        <strong>STOMP</strong>는 "언어 규칙"입니다. "자, 이제부터 한국어로만 대화하자"라고 약속하는 것입니다.
+                    </div>
+                    <div class="s-item">
+                        <strong>Redis</strong>는 "중계탑"입니다. 서울에서 말한 내용을 부산에 있는 사람에게도 들리게 해줍니다.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Integrated Architecture Flow (Moved to End) -->
+        <section class="flow-section fade-in-section">
+            <h2>전체 아키텍처 흐름도</h2>
+            <p class="section-desc">User A가 보낸 메시지가 User B에게 도착하기까지의 여정</p>
+
+            <div class="system-diagram">
+                <div class="diagram-note">
+                    <span class="pulse-dot"></span>
+                    <strong>Heartbeat 유지 중:</strong> 클라이언트와 서버는 주기적으로 신호(Ping/Pong)를 주고받으며 연결이 끊기지 않았는지 확인합니다.
+                </div>
+
+                <!-- Layer 1: Clients -->
+                <div class="layer client-layer">
+                    <div class="component user-node" id="user-a">
+                        <div class="icon">👤</div>
+                        <span>User A</span>
+                        <div class="badge">Sender</div>
+                    </div>
+
+                    <div class="component user-node" id="user-b">
+                        <div class="icon">👤</div>
+                        <span>User B</span>
+                        <div class="badge">Receiver</div>
+                    </div>
+                </div>
+
+                <!-- Connections -->
+                <div class="connections-layer">
+                    <div class="conn-line left active-conn">
+                        <span class="conn-label">WebSocket Connection</span>
+                        <div class="heartbeat-pulse"></div>
+                        <div class="arrow-down"></div>
+                    </div>
+                    <div class="conn-line right active-conn">
+                        <span class="conn-label">WebSocket Connection</span>
+                        <div class="heartbeat-pulse delay"></div>
+                        <div class="arrow-up"></div>
+                    </div>
+                </div>
+
+                <!-- Layer 2: Servers -->
+                <div class="layer server-layer">
+                    <div class="server-cluster">
+                        <div class="component server-node" id="server-1">
+                            <div class="icon">⚙️</div>
+                            <span>Server 1</span>
+                            <div class="status-dot"></div>
+                        </div>
+                        <div class="component server-node" id="server-2">
+                            <div class="icon">⚙️</div>
+                            <span>Server 2</span>
+                            <div class="status-dot"></div>
+                        </div>
+                    </div>
+                    <div class="cluster-label">Spring Boot Cluster</div>
+                </div>
+
+                <!-- Connections -->
+                <div class="connections-layer">
+                    <div class="conn-line center-down">
+                        <span class="conn-label">Pub</span>
+                        <div class="arrow-down"></div>
+                    </div>
+                    <div class="conn-line center-up">
+                        <span class="conn-label">Sub</span>
+                        <div class="arrow-up"></div>
+                    </div>
+                </div>
+
+                <!-- Layer 3: Redis -->
+                <div class="layer infra-layer">
+                    <div class="component redis-node main">
+                        <div class="icon">🔴</div>
+                        <span>Redis Pub/Sub</span>
+                        <div class="topic-tag">Topic: /chat/room/1</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-steps-grid">
+                <div class="step-item">
+                    <span class="num">1</span>
+                    <div class="text">
+                        <strong>Send (메시지 전송)</strong>
+                        <p>User A가 Server 1에게 STOMP SEND 프레임을 보냅니다.<br><code>DEST: /pub/chat</code></p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <span class="num">2</span>
+                    <div class="text">
+                        <strong>Publish (발행)</strong>
+                        <p>Server 1은 메시지를 받아 Redis의 특정 Topic에 발행(Publish)합니다. 이 단계에서 DB 저장도 수행합니다.</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <span class="num">3</span>
+                    <div class="text">
+                        <strong>Broadcast (전파)</strong>
+                        <p>Redis는 해당 Topic을 구독(Subscribe)하고 있는 모든 서버(Server 1, 2...)에게 메시지를 즉시 전파합니다.</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <span class="num">4</span>
+                    <div class="text">
+                        <strong>Push (전달)</strong>
+                        <p>메시지를 전달받은 Server 2는 자신의 서버에 연결된 User B에게 WebSocket을 통해 메시지를 밀어넣습니다(Push).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2024 Chat Architecture Guide. Designed for Developers.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
