@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS S3 완전 정복</title>
+    <link rel="stylesheet" href="styles.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+KR:wght@400;500;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <header class="header">
+        <div class="container header-content">
+            <div class="logo">
+                <span class="logo-aws">AWS</span> <span class="logo-s3">S3 Explorer</span>
+            </div>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="#intro">소개</a></li>
+                    <li><a href="#background">배경 및 필요성</a></li>
+                    <li><a href="#concepts">핵심 개념</a></li>
+                    <li><a href="#features">주요 기능</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero" id="intro">
+        <div class="hero-bg"></div>
+        <div class="container hero-container">
+            <div class="hero-content">
+                <h1>
+                    <span class="highlight">AWS S3</span><br>The Backbone of the Internet
+                </h1>
+                <p class="hero-subtitle">
+                    무제한 확장성, 99.999999999%의 내구성.<br>
+                    클라우드 네이티브 애플리케이션의 시작점인 S3를 완벽하게 이해해보세요.
+                </p>
+                <div class="hero-actions">
+                    <a href="#background" class="btn btn-primary">학습 시작하기</a>
+                    <a href="#concepts" class="btn btn-secondary">핵심 개념 보기</a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="floating-bucket">
+                    <div class="cube-face front">S3</div>
+                    <div class="cube-face back"></div>
+                    <div class="cube-face right"></div>
+                    <div class="cube-face left"></div>
+                    <div class="cube-face top"></div>
+                    <div class="cube-face bottom"></div>
+                    <div class="floating-item item-1">📄</div>
+                    <div class="floating-item item-2">🖼️</div>
+                    <div class="floating-item item-3">📼</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main class="container">
+        <!-- 객체 스토리지란? 섹션 -->
+        <section id="object-storage" class="section">
+            <div class="section-header">
+                <h2>스토리지 유형 비교</h2>
+                <p>데이터 저장 방식의 진화: 파일 vs 블록 vs 객체</p>
+            </div>
+
+            <div class="storage-comparison">
+                <!-- File Storage -->
+                <div class="storage-card file-type">
+                    <div class="storage-header">
+                        <h3>📂 파일 스토리지</h3>
+                        <span class="storage-subtitle">File Storage</span>
+                    </div>
+                    <div class="storage-visual">
+                        <div class="tree-structure">
+                            <div class="tree-root">/ (Root)</div>
+                            <div class="tree-branch">
+                                <div class="tree-line"></div>
+                                <div class="tree-node">users</div>
+                                <div class="tree-branch">
+                                    <div class="tree-line"></div>
+                                    <div class="tree-file">doc.txt</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="storage-desc">
+                        <p><strong>계층 구조</strong></p>
+                        <p>폴더/디렉토리 방식. 공유가 쉽지만 데이터가 많아지면 성능이 저하됩니다.</p>
+                        <p class="use-case-tag">예: NAS, Windows 탐색기</p>
+                    </div>
+                </div>
+
+                <!-- Block Storage -->
+                <div class="storage-card block-type">
+                    <div class="storage-header">
+                        <h3>🧱 블록 스토리지</h3>
+                        <span class="storage-subtitle">Block Storage</span>
+                    </div>
+                    <div class="storage-visual">
+                        <div class="block-grid">
+                            <div class="disk-block">A1</div>
+                            <div class="disk-block">A2</div>
+                            <div class="disk-block">B1</div>
+                            <div class="disk-block">B2</div>
+                        </div>
+                    </div>
+                    <div class="storage-desc">
+                        <p><strong>고정 블록</strong></p>
+                        <p>데이터를 일정한 크기의 블록으로 나누어 저장. 빠르지만 메타데이터가 없고 공유가 어렵습니다.</p>
+                        <p class="use-case-tag">예: DB, OS 부팅 디스크 (EBS)</p>
+                    </div>
+                </div>
+
+                <!-- Object Storage -->
+                <div class="storage-card object-type highlight-card">
+                    <div class="storage-header">
+                        <h3>📦 객체 스토리지</h3>
+                        <span class="storage-subtitle">Object Storage (S3)</span>
+                    </div>
+                    <div class="storage-visual">
+                        <div class="object-pool">
+                            <div class="pool-water"></div>
+                            <div class="pool-object obj-a">
+                                <span class="obj-id">ID: 123</span>
+                                <span class="obj-meta">Meta</span>
+                            </div>
+                            <div class="pool-object obj-b">
+                                <span class="obj-id">ID: 456</span>
+                                <span class="obj-meta">Meta</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="storage-desc">
+                        <p><strong>평면 구조 + 메타데이터</strong></p>
+                        <p>데이터와 속성(메타데이터)을 함께 저장. 무한 확장이 가능하며 인터넷을 통해 어디서든 접근 가능합니다.</p>
+                        <p class="use-case-tag">예: 넷플릭스, 백업, 웹 호스팅</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Use Cases Section -->
+        <section id="use-cases" class="section">
+            <div class="section-header">
+                <h2>S3는 언제 사용하나요?</h2>
+                <p>실제 기업들의 활용 사례</p>
+            </div>
+            <div class="use-cases-grid">
+                <div class="use-case-item">
+                    <div class="uc-icon">🎬</div>
+                    <h3>미디어 스트리밍</h3>
+                    <p>넷플릭스(Netflix)는 전 세계 사용자에게 영상을 끊김 없이 제공하기 위해 S3에 콘텐츠를 저장합니다.</p>
+                </div>
+                <div class="use-case-item">
+                    <div class="uc-icon">💾</div>
+                    <h3>백업 및 아카이빙</h3>
+                    <p>중요한 데이터베이스 백업이나 법적 보관이 필요한 로그 데이터를 저렴한 비용(Glacier)으로 장기 보관합니다.</p>
+                </div>
+                <div class="use-case-item">
+                    <div class="uc-icon">📊</div>
+                    <h3>데이터 레이크</h3>
+                    <p>다양한 형식의 원시 데이터(Raw Data)를 한곳에 모아두고 빅데이터 분석을 수행하는 저장소로 활용합니다.</p>
+                </div>
+                <div class="use-case-item">
+                    <div class="uc-icon">🌐</div>
+                    <h3>정적 웹사이트</h3>
+                    <p>서버 없이 HTML/CSS/JS 파일만으로 구성된 웹사이트를 가장 저렴하고 안정적으로 배포할 수 있습니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Workflows Section -->
+        <section id="workflows" class="section">
+            <div class="section-header">
+                <h2>동작 원리 (How it Works)</h2>
+                <p>S3의 핵심 워크플로우를 시각적으로 알아봅니다.</p>
+            </div>
+
+            <div class="workflow-container">
+                <!-- Standard Upload Flow -->
+                <div class="workflow-card">
+                    <h3>1. 기본 파일 업로드 흐름</h3>
+                    <p>클라이언트가 API를 통해 버킷에 객체를 업로드하는 과정입니다.</p>
+                    <div class="flow-diagram standard-upload">
+                        <div class="flow-step client">
+                            <div class="step-icon">💻</div>
+                            <span>Client</span>
+                        </div>
+                        <div class="flow-arrow">
+                            <span class="arrow-label">PUT Object</span>
+                            <div class="arrow-line"></div>
+                        </div>
+                        <div class="flow-step s3">
+                            <div class="step-icon">🪣</div>
+                            <span>S3 Bucket</span>
+                        </div>
+                        <div class="flow-arrow return">
+                            <span class="arrow-label">200 OK</span>
+                            <div class="arrow-line"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Presigned URL Flow -->
+                <div class="workflow-card">
+                    <h3>2. Presigned URL (미리 서명된 URL)</h3>
+                    <p>서버 부하 없이 클라이언트가 S3에 직접 업로드할 수 있게 해주는 보안 방식입니다.</p>
+                    <div class="flow-diagram presigned-upload">
+                        <div class="flow-step client">
+                            <div class="step-icon">👤</div>
+                            <span>User</span>
+                        </div>
+                        <div class="flow-arrow step-1">
+                            <span class="arrow-label">1. URL 요청</span>
+                            <div class="arrow-line"></div>
+                        </div>
+                        <div class="flow-step server">
+                            <div class="step-icon">⚙️</div>
+                            <span>App Server</span>
+                        </div>
+                        <div class="flow-arrow step-2">
+                            <span class="arrow-label">2. URL 생성 & 반환</span>
+                            <div class="arrow-line"></div>
+                        </div>
+                        <!-- S3 Interaction -->
+                        <div class="flow-arrow step-3">
+                            <span class="arrow-label">3. 직접 업로드 (PUT)</span>
+                            <div class="arrow-line"></div>
+                        </div>
+                        <div class="flow-step s3-target">
+                            <div class="step-icon">🪣</div>
+                            <span>S3</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 배경 및 필요성 섹션 -->
+        <section id="background" class="section">
+            <div class="section-header">
+                <h2>그렇다면, 왜 <span class="highlight-text">AWS S3</span>인가요?</h2>
+                <p>수많은 객체 스토리지 중에서도 S3가 선택받는 이유</p>
+            </div>
+
+            <div class="why-grid">
+                <!-- Traditional vs Cloud Comparison -->
+                <div class="why-card">
+                    <div class="why-text">
+                        <h3>💾 과거: 하드웨어의 굴레</h3>
+                        <p>
+                            예전에는 데이터를 저장하려면 <strong>물리적인 서버와 하드 디스크</strong>를 직접 구매해야 했습니다.
+                            <br><br>
+                            • <strong>용량 부족:</strong> 디스크가 꽉 차면 서버를 끄고 새 디스크를 장착해야 했습니다.<br>
+                            • <strong>비용 낭비:</strong> 미래를 대비해 미리 비싼 장비를 사둬야 했습니다(Over-provisioning).<br>
+                            • <strong>데이터 유실:</strong> 하드 디스크 고장으로 인한 데이터 손실 위험이 항상 존재했습니다.
+                        </p>
+                    </div>
+                    <div class="why-visual">
+                        <div class="server-rack-visual">
+                            <div class="server-rack">
+                                <div class="server-unit full">
+                                    <span class="hdd-led red"></span>
+                                    <span class="hdd-label">DISK FULL</span>
+                                </div>
+                                <div class="server-unit">
+                                    <span class="hdd-led green"></span>
+                                </div>
+                                <div class="server-unit">
+                                    <span class="hdd-led green"></span>
+                                </div>
+                            </div>
+                            <div class="pain-point-arrow">❌ 확장 불가</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- S3 Solution -->
+                <div class="why-card highlight-card">
+                    <div class="why-text">
+                        <h3>☁️ 현재: S3의 무한한 확장성</h3>
+                        <p>
+                            S3는 <strong>"인터넷 규모(Internet Scale)"</strong> 저장소입니다.
+                            <br><br>
+                            • <strong>무제한 용량:</strong> 1바이트부터 수 페타바이트까지, 저장하는 만큼만 자동으로 늘어납니다.<br>
+                            • <strong>내구성:</strong> 데이터가 3개 이상의 데이터 센터에 자동 복제되어 <strong>99.999999999%</strong>(11 9s)의
+                            내구성을 보장합니다.<br>
+                            • <strong>비용 효율:</strong> 쓴 만큼만 비용을 지불합니다(Pay-as-you-go).
+                        </p>
+                    </div>
+                    <div class="why-visual">
+                        <div class="cloud-scale-visual">
+                            <div class="cloud-icon-large">☁️</div>
+                            <div class="scale-arrows">
+                                <span class="arrow-expand">↔</span>
+                                <span class="arrow-expand vertical">↕</span>
+                            </div>
+                            <div class="infinity-symbol">∞</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ecosystem -->
+                <div class="why-card full-width">
+                    <div class="why-text center-text">
+                        <h3>🚀 클라우드의 심장, S3</h3>
+                        <p>S3는 단순한 저장소를 넘어, 모든 클라우드 서비스가 데이터를 주고받는 <strong>허브(Hub)</strong> 역할을 합니다.</p>
+                    </div>
+                    <div class="why-visual wide-visual">
+                        <div class="ecosystem-diagram">
+                            <div class="center-node">
+                                <div class="s3-bucket-icon">🪣 S3</div>
+                            </div>
+
+                            <div class="connected-node node-1">
+                                <div class="node-icon">🖥️</div>
+                                <span>웹 호스팅</span>
+                            </div>
+                            <div class="connected-node node-2">
+                                <div class="node-icon">📊</div>
+                                <span>빅데이터 분석</span>
+                            </div>
+                            <div class="connected-node node-3">
+                                <div class="node-icon">🛡️</div>
+                                <span>백업/아카이빙</span>
+                            </div>
+                            <div class="connected-node node-4">
+                                <div class="node-icon">🤖</div>
+                                <span>AI 학습 데이터</span>
+                            </div>
+
+                            <!-- Connecting Lines -->
+                            <div class="connection-line line-1"></div>
+                            <div class="connection-line line-2"></div>
+                            <div class="connection-line line-3"></div>
+                            <div class="connection-line line-4"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 핵심 개념 섹션 -->
+        <section id="concepts" class="section">
+            <div class="section-header">
+                <h2>핵심 개념 (Core Concepts)</h2>
+                <p>Amazon S3를 구성하는 기본 요소들을 시각적으로 이해해봅시다.</p>
+            </div>
+
+            <div class="concepts-grid">
+                <!-- Bucket Card -->
+                <div class="glass-card concept-card">
+                    <div class="concept-header">
+                        <h3>🪣 버킷 (Buckets)</h3>
+                    </div>
+                    <p>버킷은 S3에 저장되는 객체(파일)들을 담는 <strong>컨테이너</strong>입니다. 윈도우의 폴더와 비슷하지만, 용량 제한이 없고 전 세계에서 유일한 이름을 가져야
+                        합니다.</p>
+                    <div class="concept-visual">
+                        <div class="diagram-container">
+                            <div class="bucket">
+                                <div class="bucket-rim"></div>
+                                <div class="bucket-body">
+                                    <div class="object obj-1">이미지.jpg</div>
+                                    <div class="object obj-2">데이터.json</div>
+                                    <div class="object obj-3">index.html</div>
+                                </div>
+                                <div class="bucket-label">S3 버킷</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Object Card -->
+                <div class="glass-card concept-card">
+                    <div class="concept-header">
+                        <h3>📄 객체 (Objects)</h3>
+                    </div>
+                    <p>S3에 저장되는 기본 개체입니다. <strong>데이터(Data)</strong>, <strong>메타데이터(Metadata)</strong>,
+                        <strong>키(Key)</strong>로 구성됩니다. 객체는 <strong>불변(Immutable)</strong>하므로 수정하려면 전체를 덮어써야 합니다.
+                    </p>
+                    <div class="concept-visual">
+                        <div class="diagram-container">
+                            <div class="object-structure">
+                                <div class="key-value-pair">
+                                    <div class="key">Key: "photos/vacation.jpg"</div>
+                                    <div class="arrow">➜</div>
+                                    <div class="value">
+                                        <div class="file-icon">JPG</div>
+                                        <span>객체 데이터</span>
+                                    </div>
+                                </div>
+                                <div class="metadata">
+                                    <span>+ 메타데이터 (크기, 날짜 등)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Keys Card -->
+                <div class="glass-card concept-card">
+                    <div class="concept-header">
+                        <h3>🔑 키 (Keys)</h3>
+                    </div>
+                    <p>버킷 내에서 객체를 식별하는 <strong>고유한 식별자</strong>입니다. S3는 평면 구조이지만, 키 이름에 슬래시(/)를 사용하여 폴더 구조처럼 보이게 합니다.
+                    </p>
+                    <div class="concept-visual">
+                        <div class="diagram-container">
+                            <div class="key-visual">
+                                <div class="folder-structure">
+                                    <div class="folder">📂 photos</div>
+                                    <div class="sub-folder">📂 2024</div>
+                                    <div class="file">📄 image.jpg</div>
+                                </div>
+                                <div class="arrow-right">➜</div>
+                                <div class="flat-structure">
+                                    <div class="key-text">"photos/2024/image.jpg"</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Regions Card -->
+                <div class="glass-card concept-card">
+                    <div class="concept-header">
+                        <h3>🌍 리전 (Regions)</h3>
+                    </div>
+                    <p>버킷을 생성할 <strong>지리적 위치</strong>를 선택합니다. 사용자와 가까운 리전을 선택하면 속도가 빨라지고 비용을 최적화할 수 있습니다.</p>
+                    <div class="concept-visual">
+                        <div class="diagram-container">
+                            <div class="region-map">
+                                <div class="map-bg"></div>
+                                <div class="region-point seoul">
+                                    <div class="pulse"></div>
+                                    <span class="region-label">Seoul</span>
+                                </div>
+                                <div class="region-point us">
+                                    <span class="region-label">Virginia</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 주요 기능 섹션 -->
+        <section id="features" class="section">
+            <div class="section-header">
+                <h2>주요 기능</h2>
+                <p>S3가 업계 표준인 이유</p>
+            </div>
+
+            <div class="features-grid">
+                <!-- Storage Classes -->
+                <div class="feature-item">
+                    <h3>스토리지 클래스 (Storage Classes)</h3>
+                    <p>데이터의 접근 빈도에 따라 비용을 최적화할 수 있는 다양한 클래스를 제공합니다.</p>
+                    <div class="diagram-container" style="height: 200px; margin-top: 20px;">
+                        <div class="chart">
+                            <div class="axis-y">비용</div>
+                            <div class="axis-x">접근 빈도</div>
+
+                            <div class="bar-group">
+                                <div class="bar standard" style="height: 80%">
+                                    <span>$$$</span>
+                                </div>
+                                <div class="label">Standard</div>
+                            </div>
+
+                            <div class="bar-group">
+                                <div class="bar ia" style="height: 50%">
+                                    <span>$$</span>
+                                </div>
+                                <div class="label">IA</div>
+                            </div>
+
+                            <div class="bar-group">
+                                <div class="bar glacier" style="height: 20%">
+                                    <span>$</span>
+                                </div>
+                                <div class="label">Glacier</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Versioning -->
+                <div class="feature-item">
+                    <h3>버전 관리 (Versioning)</h3>
+                    <p>실수로 파일을 삭제하거나 덮어써도 복구할 수 있도록, 객체의 여러 버전을 유지할 수 있습니다.</p>
+                    <div class="diagram-container" style="height: 180px; margin-top: 20px;">
+                        <div class="version-stack">
+                            <div class="version-card">
+                                <div class="current-version-tag">Current</div>
+                                <span>report.pdf</span>
+                                <div class="version-label">v3 (Latest)</div>
+                            </div>
+                            <div class="version-card">
+                                <span>report.pdf</span>
+                                <div class="version-label">v2</div>
+                            </div>
+                            <div class="version-card">
+                                <span>report.pdf</span>
+                                <div class="version-label">v1</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security -->
+                <div class="feature-item">
+                    <h3>보안 및 접근 제어</h3>
+                    <p>IAM 정책, 버킷 정책, ACL을 통해 정교한 접근 제어가 가능하며, 모든 데이터는 암호화됩니다.</p>
+                    <div class="diagram-container" style="height: 150px; margin-top: 20px;">
+                        <div class="security-visual">
+                            <div class="security-actor">
+                                <div class="actor-icon">👤</div>
+                                <span class="stage-name">User</span>
+                            </div>
+                            <div class="security-arrow">→</div>
+                            <div class="security-shield">🛡️</div>
+                            <div class="security-arrow blocked">→</div>
+                            <div class="security-actor">
+                                <div class="actor-icon">🪣</div>
+                                <span class="stage-name">Bucket</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lifecycle Management -->
+                <div class="feature-item">
+                    <h3>수명 주기 관리 (Lifecycle)</h3>
+                    <p>데이터의 수명 주기에 따라 자동으로 스토리지 클래스를 변경하거나 삭제하여 비용을 절감합니다.</p>
+                    <div class="diagram-container" style="height: 150px; margin-top: 20px;">
+                        <div class="lifecycle-flow">
+                            <div class="lifecycle-stage">
+                                <div class="stage-icon">⚡</div>
+                                <span class="stage-name">Standard</span>
+                            </div>
+                            <div class="lifecycle-arrow">
+                                <span class="lifecycle-days">30일 후</span>
+                            </div>
+                            <div class="lifecycle-stage">
+                                <div class="stage-icon">📉</div>
+                                <span class="stage-name">IA</span>
+                            </div>
+                            <div class="lifecycle-arrow">
+                                <span class="lifecycle-days">90일 후</span>
+                            </div>
+                            <div class="lifecycle-stage">
+                                <div class="stage-icon">🧊</div>
+                                <span class="stage-name">Glacier</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Consistency -->
+                <div class="feature-item">
+                    <h3>데이터 일관성 (Consistency)</h3>
+                    <p>모든 S3 PUT 및 DELETE 요청에 대해 강력한 쓰기 후 읽기 일관성(Strong Consistency)을 제공합니다.</p>
+                    <div class="diagram-container" style="height: 150px; margin-top: 20px;">
+                        <div class="consistency-timeline">
+                            <div class="timeline-event">
+                                <div class="event-time">T=0s</div>
+                                <div class="event-action">PUT object.jpg</div>
+                            </div>
+                            <div class="timeline-event">
+                                <div class="event-time">T=0.1s</div>
+                                <div class="event-action">GET object.jpg</div>
+                                <div class="event-result">Success! (New Data)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Static Website Hosting -->
+                <div class="feature-item">
+                    <h3>정적 웹 사이트 호스팅</h3>
+                    <p>별도의 웹 서버 없이 HTML, CSS, JS 파일만으로 구성된 웹사이트를 S3 버킷을 통해 직접 서비스할 수 있습니다.</p>
+                    <div class="diagram-container" style="height: 180px; margin-top: 20px;">
+                        <div class="browser-window">
+                            <div class="browser-bar">
+                                <div class="browser-dots">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <div class="browser-url">http://my-bucket...</div>
+                            </div>
+                            <div class="browser-content">
+                                <h1>Hello S3!</h1>
+                                <div class="skeleton-text"></div>
+                                <div class="skeleton-text short"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Multipart Upload -->
+                <div class="feature-item">
+                    <h3>멀티파트 업로드 (Multipart Upload)</h3>
+                    <p>대용량 파일을 여러 개의 작은 부분(Part)으로 나누어 병렬로 업로드합니다. 속도가 빠르고 안정적입니다.</p>
+                    <div class="diagram-container" style="height: 180px; margin-top: 20px;">
+                        <div class="multipart-visual">
+                            <div class="large-file">
+                                <span>Big File</span>
+                            </div>
+                            <div class="split-arrows">
+                                <span>↘</span><span>↓</span><span>↙</span>
+                            </div>
+                            <div class="parts-container">
+                                <div class="file-part">1</div>
+                                <div class="file-part">2</div>
+                                <div class="file-part">3</div>
+                            </div>
+                            <div class="merge-arrow">⬇</div>
+                            <div class="s3-target">S3 Bucket</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Presigned URLs -->
+                <div class="feature-item">
+                    <h3>미리 서명된 URL (Presigned URLs)</h3>
+                    <p>임시 자격 증명을 사용하여 특정 사용자에게 제한된 시간 동안 객체에 접근하거나 업로드할 수 있는 권한을 부여합니다.</p>
+                    <div class="diagram-container" style="height: 150px; margin-top: 20px;">
+                        <div class="presigned-visual">
+                            <div class="ticket">
+                                <div class="ticket-header">ACCESS PASS</div>
+                                <div class="ticket-body">
+                                    <div class="timer">⏱ 5:00</div>
+                                    <div class="access-code">Signature=...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Pricing Section -->
+        <section id="pricing" class="section">
+            <div class="section-header">
+                <h2>S3 요금 구조 (Pricing)</h2>
+                <p>클라우드 비용의 핵심, S3는 어떻게 과금될까요?</p>
+            </div>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <div class="pricing-icon">💾</div>
+                    <h3>1. 저장 용량 (Storage)</h3>
+                    <p>저장된 데이터의 크기(GB/TB)와 저장 기간에 따라 과금됩니다. 스토리지 클래스(Standard, IA, Glacier)에 따라 요금이 다릅니다.</p>
+                </div>
+                <div class="pricing-card">
+                    <div class="pricing-icon">📡</div>
+                    <h3>2. 요청 및 데이터 검색 (Requests)</h3>
+                    <p>PUT, COPY, POST, LIST, GET 등의 API 요청 횟수에 따라 과금됩니다. Glacier 등에서 데이터를 꺼낼 때도 비용이 발생할 수 있습니다.</p>
+                </div>
+                <div class="pricing-card">
+                    <div class="pricing-icon">📤</div>
+                    <h3>3. 데이터 전송 (Data Transfer)</h3>
+                    <p>S3에서 인터넷으로 나가는 데이터(Outbound)에 대해 과금됩니다. (S3로 들어오는 데이터는 무료입니다)</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 AWS S3 Explorer. 학습용으로 제작되었습니다.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
